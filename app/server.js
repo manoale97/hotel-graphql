@@ -18,7 +18,6 @@ async function startServer() {
   const server = new ApolloServer({
     typeDefs,
     resolvers,
-    context,
     introspection: true,
     playground: true
   });
@@ -28,28 +27,7 @@ async function startServer() {
     // Middleware de Apollo con contexto personalizado
   app.use(
     '/graphql',
-    expressMiddleware(server, {
-      context: async ({ req }) => {
-        // Extraer token del header
-        const authHeader = req.headers.authorization || '';
-        const token = authHeader.split(' ')[1];
-        
-        // Contexto vulnerable: no validamos el token correctamente
-        // Permitimos tokens vacíos o inválidos para pruebas
-        let usuario = null;
-        if (token) {
-          try {
-            const jwt = await import('jsonwebtoken');
-            usuario = jwt.verify(token, process.env.JWT_SECRET);
-          } catch (error) {
-            // VULNERABILIDAD: No rechazamos el request, solo logueamos
-            console.log(`Token inválido: ${error.message}`);
-          }
-        }
-        
-        return { usuario, req };
-      }
-    })
+    expressMiddleware(server, {context})
   );
   
   app.get('/health', (req, res) => {

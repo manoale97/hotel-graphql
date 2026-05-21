@@ -17,20 +17,19 @@ const resolvers = {
     misReservas: async (_, __, { usuario }) => {
       if (!usuario) throw new Error('No autenticado');
       return await Reserva.findAll({
-        where: { usuario_id: usuario.id },
-        include: ['habitacion']
+        where: { usuario_id: usuario.id }
       });
     },
     
     // VULNERABLE A IDOR
     reserva: async (_, { id }, { usuario }) => {
       if (!usuario) throw new Error('No autenticado');
-      return await Reserva.findByPk(id, { include: ['usuario', 'habitacion'] });
+      return await Reserva.findByPk(id);
     },
     
     todasReservas: async (_, __, { usuario }) => {
       if (!usuario || usuario.rol !== 'admin') throw new Error('Acceso denegado');
-      return await Reserva.findAll({ include: ['usuario', 'habitacion'] });
+      return await Reserva.findAll();
     },
     
     usuarios: async (_, __, { usuario }) => {
