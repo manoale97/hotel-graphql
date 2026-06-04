@@ -27,7 +27,7 @@ export default (sequelize, DataTypes) => {
       type: DataTypes.STRING(20),
       defaultValue: 'cliente',
       validate: {
-        isIn: [['cliente', 'admin']]
+        isIn: [['cliente', 'admin', 'empleado']]
       }
     },
     created_at: {

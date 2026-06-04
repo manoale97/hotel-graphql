@@ -29,10 +29,24 @@ async function initDatabase() {
     });
 
     const cliente3 = await Usuario.create({
-      nombre: "Roberto ' OR '1'='1",  // Usuario malicioso para pruebas
+      nombre: "Roberto",  // Usuario malicioso para pruebas
       email: "inject@test.com",
       password_hash: "test123",
       rol: 'cliente'
+    });
+
+    const empleado1 = await Usuario.create({
+      nombre: "Victoria Gomez", 
+      email: "victoriag@hotelAPI.com",
+      password_hash: "victoria123",
+      rol: 'empleado'
+    });
+
+    const empleado2 = await Usuario.create({
+      nombre: "Juan Perez", 
+      email: "juanp@hotelAPI.com",
+      password_hash: "juanperez123",
+      rol: 'empleado'
     });
 
     // Crear habitaciones
@@ -58,7 +72,7 @@ async function initDatabase() {
     });
 
     const hab404 = await Habitacion.create({
-      numero: "404'; DROP TABLE usuarios; --",
+      numero: "404",
       tipo: 'vulnerable',
       precio_noche: 999.99,
       disponible: false
@@ -90,15 +104,6 @@ async function initDatabase() {
     });
 
     console.log('✅ Datos insertados correctamente');
-    console.log('\n📋 Credenciales para pruebas:');
-    console.log(`   Admin:    admin@hotel.com / admin123`);
-    console.log(`   Cliente1: juan@example.com / cliente123`);
-    console.log(`   Cliente2: maria@example.com / maria123`);
-    console.log(`   Inyectable: inject@test.com / test123`);
-    
-    console.log('\n🔓 Datos específicos para pruebas de inyección SQL:');
-    console.log(`   Habitación maliciosa ID: ${hab404.id}`);
-    console.log(`   Usuario malicioso ID: ${cliente3.id}`);
 
     await sequelize.close();
   } catch (error) {
