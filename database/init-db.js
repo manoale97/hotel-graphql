@@ -1,6 +1,9 @@
 import { sequelize, Usuario, Habitacion, Reserva } from './db.js';
+import { faker } from '@faker-js/faker';
+import bcrypt from 'bcrypt';
 
 async function initDatabase() {
+  faker.seed(12345);
   try {
     // Sincronizar tablas (force: true borra y recrea)
     await sequelize.sync({ force: true });
@@ -104,6 +107,135 @@ async function initDatabase() {
     });
 
     console.log('✅ Datos insertados correctamente');
+
+// ==========================
+// DATOS MASIVOS PARA TESIS
+// ==========================
+
+console.log('⏳ Generando datos de prueba...');
+
+// Usuarios
+const usuariosFaker = [];
+const passwordHash = await bcrypt.hash('123456', 10);
+
+for (let i = 0; i < 5000; i++) {
+  usuariosFaker.push({
+    nombre: faker.person.fullName(),
+    email: faker.internet.email().toLowerCase(),
+    password_hash: passwordHash,
+    rol: 'cliente'
+  });
+}
+
+const usuariosCreados = await Usuario.bulkCreate(
+  usuariosFaker,
+  { returning: true
+  }
+);
+
+console.log(`✅ ${usuariosCreados.length} usuarios creados`);
+
+
+// Habitaciones
+const habitacionesFaker = [];
+
+for (let i = 0; i < 500; i++) {
+
+  habitacionesFaker.push({
+    numero: `${1000 + i}`,
+    tipo: faker.helpers.arrayElement([
+      'individual',
+      'doble',
+      'suite'
+    ]),
+    precio_noche: faker.number.float({
+      min: 40,
+      max: 250,
+      fractionDigits: 2
+    }),
+    disponible: true
+  });
+}
+
+const habitacionesCreadas = await Habitacion.bulkCreate(
+  habitacionesFaker,
+  { returning: true }
+);
+
+console.log(`✅ ${habitacionesCreadas.length} habitaciones creadas`);
+
+
+// Reservas
+const reservasFaker = [];
+
+for (let i = 0; i < 50000; i++) {
+
+  const fechaInicio = faker.date.between({
+    from: '2026-01-01',
+    to: '2026-12-01'
+  });
+
+  const fechaFin = new Date(fechaInicio);
+
+  fechaFin.setDate(
+    fechaFin.getDate() +
+    faker.number.int({
+      min: 1,
+      max: 10
+    })
+  );
+
+  reservasFaker.push({
+
+    usuario_id:
+      usuariosCreados[
+        faker.number.int({
+          min: 0,
+          max: usuariosCreados.length - 1
+        })
+      ].id,
+
+    habitacion_id:
+      habitacionesCreadas[
+        faker.number.int({
+          min: 0,
+          max: habitacionesCreadas.length - 1
+        })
+      ].id,
+
+    fecha_inicio: fechaInicio,
+
+    fecha_fin: fechaFin,
+
+    estado: faker.helpers.arrayElement([
+      'activa',
+      'cancelada',
+      'finalizada'
+    ])
+  });
+}
+
+
+// Insertar en bloques
+const chunkSize = 5000;
+
+for (let i = 0; i < reservasFaker.length; i += chunkSize) {
+
+  const chunk = reservasFaker.slice(
+    i,
+    i + chunkSize
+  );
+
+  await Reserva.bulkCreate(chunk);
+
+  console.log(
+    `Reservas insertadas: ${
+      Math.min(i + chunkSize, reservasFaker.length)
+    }/${reservasFaker.length}`
+  );
+}
+
+console.log(`✅ ${reservasFaker.length} reservas creadas`);
 
     await sequelize.close();
   } catch (error) {

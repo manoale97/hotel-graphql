@@ -28,7 +28,7 @@ const resolvers = {
     },
     
     todasReservas: async (_, __, { usuario }) => {
-      if (!usuario || usuario.rol !== 'admin') throw new Error('Acceso denegado');
+      if (!usuario || (usuario.rol !== 'admin' && usuario.rol !== 'empleado')) throw new Error('Acceso denegado');
       return await Reserva.findAll();
     },
     
