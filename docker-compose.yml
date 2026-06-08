@@ -1,0 +1,100 @@
+services:
+
+  mysql:
+    image: mysql:8.4
+
+    container_name: mysql_tesis
+
+    restart: unless-stopped
+
+    environment:
+      MYSQL_ROOT_PASSWORD: root123
+      MYSQL_DATABASE: hoteldb
+
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+    ports:
+      - "3306:3306"
+
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+
+  init-db:
+      build: ./hotel-REST
+
+      depends_on:
+        mysql:
+          condition: service_healthy
+
+      environment:
+        DB_HOST: mysql
+        DB_PORT: 3306
+        DB_USER: root
+        DB_PASSWORD: root123
+        DB_NAME: hoteldb
+        DB_DIALECT: mysql
+
+      command: npm run init-db
+
+  rest-api:
+
+    build:
+      context: ./hotel-REST
+
+    container_name: rest_api_1
+
+    depends_on:
+      - mysql
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root123
+      DB_NAME: hoteldb
+      DB_DIALECT: mysql
+
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+
+  graphql-api:
+
+    build:
+      context: ./hotel-graphql
+
+    container_name: graphql_api_1
+
+    depends_on:
+      - mysql
+
+    ports:
+      - "4000:4000"
+
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: root123
+      DB_NAME: hoteldb
+      DB_DIALECT: mysql
+
+
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+
+volumes:
+  mysql_data:
